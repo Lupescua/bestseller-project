@@ -1,32 +1,30 @@
 <template>
-    <div class="product-card">
-      <img 
-      :src="product?.images?.[0] || fallbackImage" 
-      :alt="product?.name?.en || product?.name?.dk || 'Unnamed Product'" 
-       class="max-w-md"
+  <div class="product-card">
+    <img
+      :src="product?.images?.[0] || fallbackImage"
+      :alt="product?.name?.en || product?.name?.dk || 'Unnamed Product'"
+      class="max-w-md"
     />
     <h3>{{ product?.name?.en || product?.name?.dk || 'Unnamed Product' }}</h3>
     <p>{{ product?.price ? product.price + ' DKK' : 'Price not available' }}</p>
-    
-    </div>
-  </template>
-  
-  <script>
-  import fallbackImage from '@/assets/fallback-image.png'; 
+  </div>
+</template>
 
-  export default {
-    props: {
-      product: Object,
-    },
+<script>
+import fallbackImage from '@/assets/fallback-image.png';
+
+export default {
+  props: {
+    product: Object,
+  },
   data() {
     return {
-      fallbackImage, 
+      fallbackImage,
     };
   },
-  };
-  </script>
-  
-  <style>
-  /* Add basic styling */
-  </style>
-  
+};
+</script>
+
+<style>
+/* Add basic styling */
+</style>

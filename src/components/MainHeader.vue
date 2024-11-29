@@ -1,72 +1,72 @@
 <template>
   <header class="header">
-  <div>
-    <!-- Breadcrumbs -->
-    <nav class="breadcrumbs">
-      <span v-for="(crumb, index) in breadcrumbs" :key="index">
-        <router-link :to="crumb.path">{{ crumb.name }}</router-link>
-        <span v-if="index < breadcrumbs.length - 1"> / </span>
-      </span>
-    </nav>
+    <div>
+      <!-- Breadcrumbs -->
+      <nav class="breadcrumbs">
+        <span v-for="(crumb, index) in breadcrumbs" :key="index">
+          <router-link :to="crumb.path">{{ crumb.name }}</router-link>
+          <span v-if="index < breadcrumbs.length - 1"> / </span>
+        </span>
+      </nav>
 
-    <!-- Category Cards -->
-    <div class="category-grid">
-<!-- Back to Home Button -->
-<div
-        v-if="!currentCategories.length"
-        class="category-card"
-        @click="goToHome"
-      >
-        <img
-          src="../assets/logo.png"
-          alt="Application Logo"
-          class="category-image"
-        />
-        <h3>Back to Home</h3>
-      </div>
-
-      <div
-        v-for="category in currentCategories"
-        :key="category.id"
-        class="category-card"
-      >
-        <router-link :to="'/' + category.id">
+      <!-- Category Cards -->
+      <div class="category-grid">
+        <!-- Back to Home Button -->
+        <div
+          v-if="!currentCategories.length"
+          class="category-card"
+          @click="goToHome"
+        >
           <img
-            :src="getFirstProductImage(category)"
-            alt="Category Image"
+            src="../assets/logo.png"
+            alt="Application Logo"
             class="category-image"
           />
-          <h3>{{ category.name.en }}</h3>
-        </router-link>
+          <h3>Back to Home</h3>
+        </div>
+
+        <div
+          v-for="category in currentCategories"
+          :key="category.id"
+          class="category-card"
+        >
+          <router-link :to="'/' + category.id">
+            <img
+              :src="getFirstProductImage(category)"
+              alt="Category Image"
+              class="category-image"
+            />
+            <h3>{{ category.name.en }}</h3>
+          </router-link>
+        </div>
       </div>
     </div>
-  </div>
   </header>
 </template>
 
-
 <script>
-import { ref, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import categoriesData from "../assets/data.json"; 
-import productsData from "../assets/data.json"; 
+import { ref, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import data from '../assets/data.json';
 
 export default {
   setup() {
     /* eslint-disable */
-    const allCategories = ref(categoriesData.categories.categories); // Load categories from data
-    const allProducts = ref(productsData.products); 
+    const allCategories = ref(data.categories.categories); // Load categories from data
+    const allProducts = ref(data.products);
     const breadcrumbs = ref([]);
     const route = useRoute(); // Get the current route
     const router = useRouter(); // Access the router
 
     // Navigate back to Home
     const goToHome = () => {
-      router.push("/");
+      router.push('/');
     };
 
     // Find a category by its ID
     const findCategoryById = (id, categories) => {
+      // if (!categories || categories.length === 0) return null; // Handle empty categories
+
       for (const category of categories) {
         if (category.id === id) return category;
         if (category.categories) {
@@ -76,7 +76,6 @@ export default {
       }
       return null;
     };
-    
 
     // Update breadcrumbs dynamically
     const updateBreadcrumbs = (category) => {
@@ -85,29 +84,32 @@ export default {
       while (current) {
         crumbs.unshift({
           name: current.name.en,
-          path: current.id === "root" ? "/" : `/${current.id}`,
+          path: current.id === 'root' ? '/' : `/${current.id}`,
         });
         current = findCategoryById(
           current.parent_category_id,
           allCategories.value
         );
       }
-      if (!crumbs.length || crumbs[0].path !== "/") {
-    crumbs.unshift({
-      name: "Home",
-      path: "/",
-    });
-  }
+      if (!crumbs.length || crumbs[0].path !== '/') {
+        crumbs.unshift({
+          name: 'Home',
+          path: '/',
+        });
+      }
       breadcrumbs.value = crumbs;
     };
 
-     // Compute the current categories to display
-     const currentCategories = computed(() => {
-      const id = route.params.id || "root";
+    // Compute the current categories to display
+    const currentCategories = computed(() => {
+      if (!allCategories || allCategories.length === 0) {
+        return []; // If categories are not loaded yet, return an empty array
+      }
+      const id = route.params.id || 'root';
       // If on the root route, return level 0 categories
-      if (id === "root") {
+      if (id === 'root') {
         breadcrumbs.value = [
-          { name: "Home", path: "/" }, // Show Home breadcrumb
+          { name: 'Home', path: '/' }, // Show Home breadcrumb
         ];
         return allCategories.value;
       }
@@ -120,28 +122,27 @@ export default {
       }
       return [];
     });
-    
-// Get the first product's image for a category
-const getFirstProductImage = (category) => {
-  // If the category has subcategories, find the first product in the first subcategory
-  if (category.categories && category.categories.length > 0) {
-    for (const subCategory of category.categories) {
-      const product = allProducts.value.find(
-        (product) => product.categories.includes(subCategory.id) // Check if subCategory.id is in product.categories
-      );
-      console.log('product', product);
-      if (product) {
-        return product.images[0]; // Return the first product's image in the subcategory
-      }
-    }
-  }
 
-  // If no subcategories, get the first product directly for this category
-  const product = allProducts.value.find(
-    (product) => product.categories.includes(category.id) // Check if category.id is in product.categories
-  );
-  return product ? product.images[0] : "https://via.placeholder.com/150"; // Fallback to placeholder
-};
+    // Get the first product's image for a category
+    const getFirstProductImage = (category) => {
+      // If the category has subcategories, find the first product in the first subcategory
+      if (category.categories && category.categories.length > 0) {
+        for (const subCategory of category.categories) {
+          const product = allProducts.value.find(
+            (product) => product.categories.includes(subCategory.id) // Check if subCategory.id is in product.categories
+          );
+          if (product) {
+            return product.images[0]; // Return the first product's image in the subcategory
+          }
+        }
+      }
+
+      // If no subcategories, get the first product directly for this category
+      const product = allProducts.value.find(
+        (product) => product.categories.includes(category.id) // Check if category.id is in product.categories
+      );
+      return product ? product.images[0] : 'https://via.placeholder.com/150'; // Fallback to placeholder
+    };
     return {
       currentCategories,
       breadcrumbs,
@@ -151,7 +152,6 @@ const getFirstProductImage = (category) => {
   },
 };
 </script>
-
 
 <style scoped>
 .breadcrumbs {
