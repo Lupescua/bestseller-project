@@ -24,6 +24,7 @@
 </template>
 
 <script>
+import { ref, computed, onMounted } from 'vue';
 import MainHeader from '../components/MainHeader.vue';
 import ProductCard from '../components/ProductCard.vue';
 // import PromotionalSpot from "../components/PromotionalSpot.vue";
@@ -32,68 +33,93 @@ export default {
   /* eslint-disable */
   //  components: { MainHeader,  ProductCard, PromotionalSpot },
   components: { MainHeader, ProductCard },
-  data() {
-    return {
-      categories: [],
-      products: [],
-      promotionalSpots: [],
-      selectedCategoryId: 'root',
-    };
-  },
-  computed: {
-    filteredProducts() {
-      // Filter products based on the selected category and subcategories
-      const selectedCategory = this.findCategoryById(
-        this.selectedCategoryId,
-        this.categories
+  setup() {
+    // Reactive variables
+    const categories = ref([]);
+    const products = ref([]);
+    const promotionalSpots = ref([]);
+    const selectedCategoryId = ref('root');
+
+    // Computed property for filtered products
+    const filteredProducts = computed(() => {
+      const selectedCategory = findCategoryById(
+        selectedCategoryId.value,
+        categories.value
       );
 
+      // If no category is found (unlikely), return an empty array
       if (!selectedCategory) return [];
 
-      // Get all relevant category IDs (selected category + subcategories)
-      const categoryIds = this.getAllCategoryIds(selectedCategory);
+      // If root is selected, return all products
+      if (selectedCategory.id === 'root') {
+        return products.value;
+      }
 
-      // Filter products whose categories match any of the relevant category IDs
-      return this.products.filter((product) =>
+      // Otherwise, filter products based on category hierarchy
+      const categoryIds = getAllCategoryIds(selectedCategory);
+
+      return products.value.filter((product) =>
         product.categories.some((category) => categoryIds.includes(category))
       );
-    },
-  },
-  methods: {
-    updateSelectedCategory(categoryId) {
-      this.selectedCategoryId = categoryId;
-    },
-    findCategoryById(id, categories) {
+    });
+
+    // Update selected category
+    const updateSelectedCategory = (categoryId) => {
+      selectedCategoryId.value = categoryId;
+    };
+
+    // Helper function: Find category by ID
+    const findCategoryById = (id, categories) => {
+      // Explicitly handle root category
+      if (id === 'root') {
+        return { id: 'root', name: { en: 'All Products' }, categories };
+      }
+
+      // Search through categories recursively
       for (const category of categories) {
         if (category.id === id) return category;
         if (category.categories) {
-          const found = this.findCategoryById(id, category.categories);
+          const found = findCategoryById(id, category.categories);
           if (found) return found;
         }
       }
       return null;
-    },
-    getAllCategoryIds(category) {
+    };
+
+    // Helper function: Get all category IDs
+    const getAllCategoryIds = (category) => {
       const ids = [category.id]; // Start with the current category ID
       if (category.categories && category.categories.length > 0) {
         for (const subCategory of category.categories) {
-          ids.push(...this.getAllCategoryIds(subCategory)); // Recursively add subcategory IDs
+          ids.push(...getAllCategoryIds(subCategory)); // Recursively add subcategory IDs
         }
       }
       return ids;
-    },
-  },
-  mounted() {
-    import('../assets/data.json')
-      .then((data) => {
-        console.log('Data loaded:', data); // **Debug: Check the loaded data**
-        this.categories = data.categories.categories; // **Assign categories**
-        this.products = data.products;
-        this.promotionalSpots = data.promotionalSpots;
-      })
-      .catch((err) => {
-        console.error('Failed to load data:', err); // **Handle data loading errors**
-      });
+    };
+
+    // Load data on component mount
+    onMounted(() => {
+      import('../assets/data.json')
+        .then((data) => {
+          console.log('Data loaded:', data); // Debug: Check the loaded data
+          categories.value = data.categories.categories; // Assign categories
+          products.value = data.products;
+          promotionalSpots.value = data.promotionalSpots;
+        })
+        .catch((err) => {
+          console.error('Failed to load data:', err); // Handle data loading errors
+        });
+    });
+
+    // Return reactive data and methods
+    return {
+      categories,
+      products,
+      promotionalSpots,
+      selectedCategoryId,
+      filteredProducts,
+      updateSelectedCategory,
+    };
   },
 };
 </script>

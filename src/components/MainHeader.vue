@@ -29,6 +29,7 @@
           v-for="category in currentCategories"
           :key="category.id"
           class="category-card"
+          @click="() => selectCategory(category.id)"
         >
           <router-link :to="'/' + category.id">
             <img
@@ -45,28 +46,37 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import data from '../assets/data.json';
 
 export default {
-  setup() {
+  props: {
+    categories: Array, // Receive categories from parent
+  },
+  emits: ['categorySelected'], // Emit selected category
+  setup(props, { emit }) {
     /* eslint-disable */
-    const allCategories = ref(data.categories.categories); // Load categories from data
     const allProducts = ref(data.products);
     const breadcrumbs = ref([]);
     const route = useRoute(); // Get the current route
     const router = useRouter(); // Access the router
+    const selectedCategoryId = ref(route.params.id || 'root'); // Initialize from route params
 
     // Navigate back to Home
     const goToHome = () => {
-      router.push('/');
+      selectedCategoryId.value = 'root'; // Reset to root category
+      emit('categorySelected', 'root');
+      breadcrumbs.value = [
+        {
+          name: 'Home',
+          path: '/',
+        },
+      ];
     };
 
     // Find a category by its ID
     const findCategoryById = (id, categories) => {
-      // if (!categories || categories.length === 0) return null; // Handle empty categories
-
       for (const category of categories) {
         if (category.id === id) return category;
         if (category.categories) {
@@ -88,7 +98,7 @@ export default {
         });
         current = findCategoryById(
           current.parent_category_id,
-          allCategories.value
+          props.categories
         );
       }
       if (!crumbs.length || crumbs[0].path !== '/') {
@@ -102,26 +112,58 @@ export default {
 
     // Compute the current categories to display
     const currentCategories = computed(() => {
-      if (!allCategories || allCategories.length === 0) {
-        return []; // If categories are not loaded yet, return an empty array
+      if (!props.categories || props.categories.length === 0) {
+        return [];
       }
-      const id = route.params.id || 'root';
-      // If on the root route, return level 0 categories
-      if (id === 'root') {
+      if (selectedCategoryId.value === 'root') {
         breadcrumbs.value = [
-          { name: 'Home', path: '/' }, // Show Home breadcrumb
+          { name: 'Home', path: '/' }, // Initialize breadcrumbs
         ];
-        return allCategories.value;
+        return props.categories; // Top-level categories
       }
 
-      // For subcategories, find the current category
-      const category = findCategoryById(id, allCategories.value);
+      const category = findCategoryById(
+        selectedCategoryId.value,
+        props.categories
+      );
+
       if (category) {
         updateBreadcrumbs(category);
         return category.categories || [];
       }
       return [];
     });
+    // Populate breadcrumbs on component mount
+    onMounted(() => {
+      const initialCategory = findCategoryById(
+        selectedCategoryId.value,
+        props.categories
+      );
+      if (initialCategory) {
+        updateBreadcrumbs(initialCategory);
+      }
+    });
+
+    // Watch for route changes and update breadcrumbs
+    watch(
+      () => route.params.id,
+      (newId) => {
+        selectedCategoryId.value = newId || 'root';
+        const category = findCategoryById(
+          selectedCategoryId.value,
+          props.categories
+        );
+        if (category) {
+          selectCategory(category.id);
+          updateBreadcrumbs(category);
+        }
+      }
+    );
+    // Emit selected category ID
+    const selectCategory = (categoryId) => {
+      selectedCategoryId.value = categoryId; // Update selected category
+      emit('categorySelected', categoryId); // Notify parent component
+    };
 
     // Get the first product's image for a category
     const getFirstProductImage = (category) => {
@@ -147,6 +189,7 @@ export default {
       currentCategories,
       breadcrumbs,
       goToHome,
+      selectCategory,
       getFirstProductImage,
     };
   },
