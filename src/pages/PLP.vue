@@ -1,36 +1,45 @@
 <template>
   <div class="plp">
-    <MainHeader
+    <MainMenu
       :categories="categories"
       :breadcrumbs="breadcrumbs"
       :currentCategories="currentCategoriesWithImages"
-      :showHomeButton="selectedCategoryId !== 'root'"
       @categorySelected="updateSelectedCategory"
-      @goHome="backToHome"
     />
-    <main>
-      <div class="grid">
-        <div
-          v-for="(item, index) in combinedItems"
-          :key="index"
-          class="grid-item"
-        >
-          <PromotionalSpot v-if="item.isPromotionalSpot" :spot="item" />
-          <ProductCard v-else :product="item" />
+    <div class="plp-content">
+      <SidebarMenu
+        :categories="categories"
+        :breadcrumbs="breadcrumbs"
+        :currentCategories="currentCategoriesWithImages"
+        :showHomeButton="selectedCategoryId !== 'root'"
+        @categorySelected="updateSelectedCategory"
+        @goHome="backToHome"
+      />
+      <main class="product-grid">
+        <div class="grid">
+          <div
+            v-for="(item, index) in combinedItems"
+            :key="index"
+            class="grid-item"
+          >
+            <PromotionalSpot v-if="item.isPromotionalSpot" :spot="item" />
+            <ProductCard v-else :product="item" />
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   </div>
 </template>
 
 <script>
 import { ref, computed, onMounted, watch } from 'vue';
-import MainHeader from '../components/MainHeader.vue';
+import MainMenu from '../components/MainMenu.vue';
+import SidebarMenu from '../components/SidebarMenu.vue';
 import ProductCard from '../components/ProductCard.vue';
 import PromotionalSpot from '../components/PromotionalSpot.vue';
 
 export default {
-  components: { MainHeader, ProductCard, PromotionalSpot },
+  components: { MainMenu, ProductCard, PromotionalSpot, SidebarMenu },
   setup() {
     const categories = ref([]);
     const products = ref([]);
@@ -178,7 +187,7 @@ export default {
     return {
       categories,
       breadcrumbs,
-      currentCategoriesWithImages, // Pass this to MainHeader
+      currentCategoriesWithImages, // Pass this to MainMenu
       combinedItems,
       selectedCategoryId,
       updateSelectedCategory,
@@ -189,9 +198,30 @@ export default {
 </script>
 
 <style scoped>
+.plp {
+  display: flex;
+  flex-direction: column;
+}
+
+.plp-content {
+  display: flex;
+}
+
+.sidebar-menu {
+  flex: 0 0 250px;
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+}
+
+.product-grid {
+  flex: 1;
+  padding: 20px;
+}
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
 }
 </style>

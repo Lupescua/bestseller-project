@@ -13,26 +13,6 @@
           <span v-if="index < breadcrumbs.length - 1"> / </span>
         </span>
       </nav>
-
-      <div class="category-grid">
-        <div
-          v-for="category in currentCategories"
-          :key="category.id"
-          class="category-card"
-          @click="selectCategory(category.id)"
-        >
-          <img
-            :src="category.image"
-            alt="Category Image"
-            class="category-image"
-          />
-          <h3>{{ category.name.en }}</h3>
-        </div>
-      </div>
-
-      <button v-if="showHomeButton" @click="goHome" class="back-button">
-        Back to Home
-      </button>
     </div>
   </header>
 </template>
@@ -40,18 +20,12 @@
 <script>
 export default {
   props: {
-    categories: Array,
     breadcrumbs: Array,
-    currentCategories: Array, // Already has precomputed images
-    showHomeButton: Boolean,
   },
-  emits: ['categorySelected', 'goHome'],
+  emits: ['categorySelected'],
   methods: {
     selectCategory(categoryId) {
       this.$emit('categorySelected', categoryId);
-    },
-    goHome() {
-      this.$emit('goHome');
     },
   },
 };
