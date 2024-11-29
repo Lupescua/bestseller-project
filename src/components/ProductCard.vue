@@ -1,32 +1,46 @@
 <template>
-  <div class="card">
-    <img
-      :src="product?.images?.[0] || fallbackImage"
-      :alt="product?.name?.en || product?.name?.dk || 'Unnamed Product'"
-      class="max-w-md"
-    />
-    <h3>{{ product?.name?.en || product?.name?.dk || 'Unnamed Product' }}</h3>
-    <p>{{ product?.price ? product.price + ' DKK' : 'Price not available' }}</p>
-  </div>
+  <router-link :to="`/product/${product.id}`" class="product-card">
+    <img :src="productImage" :alt="productName" class="product-image" />
+    <h3>{{ productName }}</h3>
+    <p v-if="product?.price">{{ product.price }} DKK</p>
+    <p v-else>Price not available</p>
+  </router-link>
 </template>
 
 <script>
-import fallbackImage from '@/assets/fallback-image.png';
+import { computed, defineComponent } from 'vue';
+import fallbackImage from '../assets/fallback-image.png';
 
-export default {
+export default defineComponent({
   props: {
-    product: Object,
+    product: {
+      type: Object,
+      required: true,
+    },
   },
-  data() {
+  setup(props) {
+    const productImage = computed(
+      () => props.product?.images?.[0] || fallbackImage
+    );
+    const productName = computed(
+      () =>
+        props.product?.name?.en || props.product?.name?.dk || 'Unnamed Product'
+    );
+
     return {
-      fallbackImage,
+      productImage,
+      productName,
     };
   },
-};
+});
 </script>
 
 <style scoped>
-.card img {
+.product-card:hover {
+  transform: scale(1.05);
+}
+
+.product-image {
   max-width: 100%;
   max-height: 100%;
   object-fit: cover;

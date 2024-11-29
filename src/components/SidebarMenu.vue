@@ -86,8 +86,8 @@ export default defineComponent({
 }
 
 .category-image {
-  width: 100%;
-  height: 100px;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: cover;
   margin-bottom: 10px;
 }

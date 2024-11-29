@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue';
 import MainMenu from '../components/MainMenu.vue';
 import SidebarMenu from '../components/SidebarMenu.vue';
 import ProductCard from '../components/ProductCard.vue';
@@ -49,6 +49,9 @@ export default {
     const selectedCategoryId = ref('root');
     const breadcrumbs = ref([]);
     const combinedItems = ref([]);
+
+    const { appContext } = getCurrentInstance();
+    const fallbackImage = appContext.config.globalProperties.$fallbackImage;
 
     const currentCategories = computed(() => {
       if (selectedCategoryId.value === 'root') return categories.value;
@@ -93,7 +96,7 @@ export default {
       const product = products.value.find((product) =>
         product.categories.includes(category.id)
       );
-      return product?.images[0] || 'https://via.placeholder.com/150';
+      return product?.images[0] || fallbackImage;
     };
 
     const recalculateCombinedItems = () => {
