@@ -1,5 +1,5 @@
 <template>
-  <div class="promotional-spot" :style="{ gridArea: position }">
+  <div class="spot">
     <a :href="spot.link">
       <img :src="spot.image.imageUrl" :alt="spot.image.alt" />
     </a>
@@ -15,6 +15,10 @@ export default {
 };
 </script>
 
-<style>
-/* Add basic styling */
+<style scoped>
+.spot img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+}
 </style>

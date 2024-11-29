@@ -148,14 +148,16 @@ export default {
     watch(
       () => route.params.id,
       (newId) => {
-        selectedCategoryId.value = newId || 'root';
-        const category = findCategoryById(
-          selectedCategoryId.value,
-          props.categories
-        );
-        if (category) {
-          selectCategory(category.id);
-          updateBreadcrumbs(category);
+        if (selectedCategoryId.value !== (newId || 'root')) {
+          selectedCategoryId.value = newId || 'root';
+          const category = findCategoryById(
+            selectedCategoryId.value,
+            props.categories
+          );
+          if (category) {
+            selectCategory(category.id);
+            updateBreadcrumbs(category);
+          }
         }
       }
     );
@@ -225,46 +227,4 @@ export default {
   object-fit: cover;
   margin-bottom: 10px;
 }
-/* <nav>
-      <ul>
-        <li v-for="category in categories" :key="category.id"   @click="selectCategory(category)"
-          :class="{ 'active-category': selectedCategory?.id === category.id }"
-          class="category-item">
-          {{ category.name.en }}
-        </li>
-      </ul>
-      <div v-if="selectedCategory" class="subcategories">
-        <h3>{{ selectedCategory.name }}</h3>
-        <ul>
-          <li
-            v-for="subCategory in selectedCategory.subCategories"
-            :key="subCategory"
-            class="subcategory-item"
-          >
-            {{ subCategory }}
-          </li>
-        </ul>
-      </div>
-    </nav>
-    
-    
-    <script>
-export default {
-
-  props: {
-    categories: Array,
-  },
-  data() {
-    return {
-      selectedCategory: null, 
-    };
-  },
-  methods: {
-    selectCategory(category) {
-      this.selectedCategory = category;
-    },
-  },
-};
-</script>
-*/
 </style>

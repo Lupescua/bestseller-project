@@ -1,5 +1,5 @@
 <template>
-  <div class="product-card">
+  <div class="card">
     <img
       :src="product?.images?.[0] || fallbackImage"
       :alt="product?.name?.en || product?.name?.dk || 'Unnamed Product'"
@@ -25,6 +25,10 @@ export default {
 };
 </script>
 
-<style>
-/* Add basic styling */
+<style scoped>
+.card img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+}
 </style>
