@@ -2,7 +2,11 @@
   <div class="plp">
     <MainHeader
       :categories="categories"
+      :breadcrumbs="breadcrumbs"
+      :currentCategories="currentCategoriesWithImages"
+      :showHomeButton="selectedCategoryId !== 'root'"
       @categorySelected="updateSelectedCategory"
+      @goHome="backToHome"
     />
     <main>
       <div class="grid">
@@ -26,15 +30,32 @@ import ProductCard from '../components/ProductCard.vue';
 import PromotionalSpot from '../components/PromotionalSpot.vue';
 
 export default {
-  /* eslint-disable */
   components: { MainHeader, ProductCard, PromotionalSpot },
   setup() {
-    // Reactive variables
     const categories = ref([]);
     const products = ref([]);
     const promotionalSpots = ref([]);
     const selectedCategoryId = ref('root');
+    const breadcrumbs = ref([]);
     const combinedItems = ref([]);
+
+    const currentCategories = computed(() => {
+      if (selectedCategoryId.value === 'root') {
+        return categories.value;
+      }
+      const selectedCategory = findCategoryById(
+        selectedCategoryId.value,
+        categories.value
+      );
+      return selectedCategory?.categories || [];
+    });
+
+    const currentCategoriesWithImages = computed(() => {
+      return currentCategories.value.map((category) => ({
+        ...category,
+        image: getFirstProductImage(category),
+      }));
+    });
 
     const filteredProducts = computed(() => {
       if (selectedCategoryId.value === 'root') {
@@ -66,16 +87,56 @@ export default {
       combinedItems.value = items;
     };
 
-    // Update selected category
-    const updateSelectedCategory = (categoryId) => {
-      selectedCategoryId.value = categoryId;
+    const getFirstProductImage = (category) => {
+      if (category.categories && category.categories.length > 0) {
+        for (const subCategory of category.categories) {
+          const product = products.value.find((product) =>
+            product.categories.includes(subCategory.id)
+          );
+          if (product) return product.images[0];
+        }
+      }
+
+      const product = products.value.find((product) =>
+        product.categories.includes(category.id)
+      );
+      return product ? product.images[0] : 'https://via.placeholder.com/150';
     };
 
-    // Helper function: Find category by ID
-    const findCategoryById = (id, categories) => {
-      if (id === 'root') {
-        return { id: 'root', name: { en: 'All Products' }, categories };
+    const updateBreadcrumbs = () => {
+      const crumbs = [];
+      let currentCategory = findCategoryById(
+        selectedCategoryId.value,
+        categories.value
+      );
+      while (currentCategory) {
+        crumbs.unshift({
+          id: currentCategory.id,
+          name: currentCategory.name.en,
+        });
+        currentCategory = findCategoryById(
+          currentCategory.parent_category_id,
+          categories.value
+        );
       }
+      if (!crumbs.length || crumbs[0].id !== 'root') {
+        crumbs.unshift({ id: 'root', name: 'Home' });
+      }
+      breadcrumbs.value = crumbs;
+    };
+
+    const updateSelectedCategory = (categoryId) => {
+      selectedCategoryId.value = categoryId;
+      updateBreadcrumbs();
+    };
+
+    const backToHome = () => {
+      selectedCategoryId.value = 'root';
+      updateBreadcrumbs();
+    };
+
+    const findCategoryById = (id, categories) => {
+      if (id === 'root') return { id: 'root', name: { en: 'Home' } };
       for (const category of categories) {
         if (category.id === id) return category;
         if (category.categories) {
@@ -86,19 +147,14 @@ export default {
       return null;
     };
 
-    // Helper function: Get all category IDs
     const getAllCategoryIds = (category) => {
       const ids = [category.id];
-      if (category.categories && category.categories.length > 0) {
-        for (const subCategory of category.categories) {
+      if (category.categories) {
+        category.categories.forEach((subCategory) => {
           ids.push(...getAllCategoryIds(subCategory));
-        }
+        });
       }
       return ids;
-    };
-
-    const backToHome = () => {
-      selectedCategoryId.value = 'root';
     };
 
     onMounted(() => {
@@ -107,25 +163,24 @@ export default {
           categories.value = data.categories.categories;
           products.value = data.products;
           promotionalSpots.value = data.promotionalSpots;
+          updateBreadcrumbs();
           recalculateCombinedItems();
         })
         .catch((err) => {
-          console.error('Failed to load data:', err);
+          console.error('Error loading data:', err);
         });
     });
 
-    // Watch for changes in selectedCategoryId and recalculate combinedItems
-    watch(selectedCategoryId, () => {
+    watch([selectedCategoryId, promotionalSpots, filteredProducts], () => {
       recalculateCombinedItems();
     });
 
-    // Return reactive data and methods
     return {
       categories,
-      products,
-      promotionalSpots,
-      selectedCategoryId,
+      breadcrumbs,
+      currentCategoriesWithImages, // Pass this to MainHeader
       combinedItems,
+      selectedCategoryId,
       updateSelectedCategory,
       backToHome,
     };
@@ -136,32 +191,7 @@ export default {
 <style scoped>
 .grid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(150px, 1fr)
-  ); /* Dynamically adjust columns */
-  gap: 1rem; /* Space between grid items */
-  max-width: 100%; /* Limit grid width */
-  margin: 0 auto; /* Center the grid */
-}
-
-.grid-item {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  height: 100%; /* Match the size of the grid cell */
-}
-
-.spot,
-.card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #f9f9f9; /* Optional background */
-  transition: transform 0.2s ease;
-}
-
-.spot:hover,
-.card:hover {
-  transform: scale(1.05); /* Add a hover effect */
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
 }
 </style>
