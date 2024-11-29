@@ -6,6 +6,7 @@
       :currentCategories="currentCategoriesWithImages"
       @categorySelected="updateSelectedCategory"
     />
+
     <div class="plp-content">
       <SidebarMenu
         :categories="categories"
@@ -15,6 +16,7 @@
         @categorySelected="updateSelectedCategory"
         @goHome="backToHome"
       />
+
       <main class="product-grid">
         <div class="grid">
           <div
@@ -39,7 +41,7 @@ import ProductCard from '../components/ProductCard.vue';
 import PromotionalSpot from '../components/PromotionalSpot.vue';
 
 export default {
-  components: { MainMenu, ProductCard, PromotionalSpot, SidebarMenu },
+  components: { MainMenu, SidebarMenu, ProductCard, PromotionalSpot },
   setup() {
     const categories = ref([]);
     const products = ref([]);
@@ -49,9 +51,7 @@ export default {
     const combinedItems = ref([]);
 
     const currentCategories = computed(() => {
-      if (selectedCategoryId.value === 'root') {
-        return categories.value;
-      }
+      if (selectedCategoryId.value === 'root') return categories.value;
       const selectedCategory = findCategoryById(
         selectedCategoryId.value,
         categories.value
@@ -67,37 +67,22 @@ export default {
     });
 
     const filteredProducts = computed(() => {
-      if (selectedCategoryId.value === 'root') {
-        return products.value;
-      }
+      if (selectedCategoryId.value === 'root') return products.value;
+
       const selectedCategory = findCategoryById(
         selectedCategoryId.value,
         categories.value
       );
       if (!selectedCategory) return [];
+
       const categoryIds = getAllCategoryIds(selectedCategory);
       return products.value.filter((product) =>
         product.categories.some((category) => categoryIds.includes(category))
       );
     });
 
-    const recalculateCombinedItems = () => {
-      const items = [...filteredProducts.value];
-      const sortedSpots = [...promotionalSpots.value].sort(
-        (a, b) => b.position - a.position
-      );
-
-      sortedSpots.forEach((spot) => {
-        if (spot.position >= 0 && spot.position <= items.length) {
-          items.splice(spot.position, 0, { ...spot, isPromotionalSpot: true });
-        }
-      });
-
-      combinedItems.value = items;
-    };
-
     const getFirstProductImage = (category) => {
-      if (category.categories && category.categories.length > 0) {
+      if (category.categories?.length) {
         for (const subCategory of category.categories) {
           const product = products.value.find((product) =>
             product.categories.includes(subCategory.id)
@@ -105,26 +90,38 @@ export default {
           if (product) return product.images[0];
         }
       }
-
       const product = products.value.find((product) =>
         product.categories.includes(category.id)
       );
-      return product ? product.images[0] : 'https://via.placeholder.com/150';
+      return product?.images[0] || 'https://via.placeholder.com/150';
+    };
+
+    const recalculateCombinedItems = () => {
+      const items = [...filteredProducts.value];
+      const sortedSpots = [...promotionalSpots.value].sort(
+        (a, b) => b.position - a.position
+      );
+      sortedSpots.forEach((spot) => {
+        if (spot.position >= 0 && spot.position <= items.length) {
+          items.splice(spot.position, 0, { ...spot, isPromotionalSpot: true });
+        }
+      });
+      combinedItems.value = items;
     };
 
     const updateBreadcrumbs = () => {
       const crumbs = [];
-      let currentCategory = findCategoryById(
+      let current = findCategoryById(
         selectedCategoryId.value,
         categories.value
       );
-      while (currentCategory) {
+      while (current) {
         crumbs.unshift({
-          id: currentCategory.id,
-          name: currentCategory.name.en,
+          id: current.id,
+          name: current.name.en,
         });
-        currentCategory = findCategoryById(
-          currentCategory.parent_category_id,
+        current = findCategoryById(
+          current.parent_category_id,
           categories.value
         );
       }
@@ -175,9 +172,7 @@ export default {
           updateBreadcrumbs();
           recalculateCombinedItems();
         })
-        .catch((err) => {
-          console.error('Error loading data:', err);
-        });
+        .catch((err) => console.error('Error loading data:', err));
     });
 
     watch([selectedCategoryId, promotionalSpots, filteredProducts], () => {
@@ -187,7 +182,7 @@ export default {
     return {
       categories,
       breadcrumbs,
-      currentCategoriesWithImages, // Pass this to MainMenu
+      currentCategoriesWithImages,
       combinedItems,
       selectedCategoryId,
       updateSelectedCategory,

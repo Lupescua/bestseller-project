@@ -1,28 +1,24 @@
 <template>
   <aside class="sidebar-menu">
-    <div>
-      <!-- Category Grid -->
-      <div class="category-grid">
-        <div
-          v-for="category in currentCategories"
-          :key="category.id"
-          class="category-card"
-          @click="selectCategory(category.id)"
-        >
-          <img
-            :src="category.image || 'https://via.placeholder.com/150'"
-            alt="Category Image"
-            class="category-image"
-          />
-          <h3>{{ category.name.en }}</h3>
-        </div>
+    <div class="category-grid">
+      <div
+        v-for="category in currentCategories"
+        :key="category.id"
+        class="category-card"
+        @click="selectCategory(category.id)"
+      >
+        <img
+          :src="category.image"
+          alt="Category Image"
+          class="category-image"
+        />
+        <h3>{{ category.name.en }}</h3>
       </div>
-
-      <!-- Back Button -->
-      <button v-if="showHomeButton" @click="goHome" class="back-button">
-        Back to Home
-      </button>
     </div>
+
+    <button v-if="showHomeButton" @click="goHome" class="back-button">
+      Back to Home
+    </button>
   </aside>
 </template>
 
@@ -32,10 +28,6 @@ import { defineComponent } from 'vue';
 export default defineComponent({
   props: {
     categories: {
-      type: Array,
-      required: true,
-    },
-    breadcrumbs: {
       type: Array,
       required: true,
     },
@@ -50,12 +42,10 @@ export default defineComponent({
   },
   emits: ['categorySelected', 'goHome'],
   setup(props, { emit }) {
-    // Emit the selected category to the parent
     const selectCategory = (categoryId) => {
       emit('categorySelected', categoryId);
     };
 
-    // Emit the goHome event to reset to the root category
     const goHome = () => {
       emit('goHome');
     };

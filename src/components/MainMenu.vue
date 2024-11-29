@@ -18,17 +18,23 @@
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue';
+
+export default defineComponent({
   props: {
     breadcrumbs: Array,
   },
   emits: ['categorySelected'],
-  methods: {
-    selectCategory(categoryId) {
-      this.$emit('categorySelected', categoryId);
-    },
+  setup(props, { emit }) {
+    const selectCategory = (categoryId) => {
+      emit('categorySelected', categoryId);
+    };
+
+    return {
+      selectCategory,
+    };
   },
-};
+});
 </script>
 
 <style scoped>
