@@ -1,57 +1,55 @@
 <template>
   <div class="pdp">
-    <div class="pdp-image">
-      <img :src="product?.images?.[0] || $fallbackImage" :alt="productName" />
-    </div>
-    <div class="pdp-info">
-      <h1 class="product-name">{{ productName }}</h1>
-      <p class="product-price">
-        {{ product?.price ? product.price + ' DKK' : 'Price not available' }}
-      </p>
-      <div class="product-in-stock">
-        <p v-if="product?.stock > 0">In Stock: {{ product.stock }}</p>
-        <p v-else>Out of Stock</p>
-      </div>
+    <h1 class="product-name">{{ productName }}</h1>
+    <img :src="productImage" :alt="productName" />
+    <p class="product-price">{{ productPrice }}</p>
+    <div class="product-in-stock">
+      <p v-if="productInStock > 0">In Stock: {{ productInStock }}</p>
+      <p v-else>Out of Stock</p>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue';
+import { useProductStore } from '../stores/productStore';
+import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import data from '../assets/data.json';
 
 export default {
   setup() {
+    const productStore = useProductStore();
     const route = useRoute();
-    const product = ref(null);
-
-    const fetchProductById = (id) => {
-      const foundProduct = data.products.find((prod) => prod.id === Number(id));
-      if (foundProduct) {
-        product.value = foundProduct;
-      } else {
-        console.error(`Product with ID ${id} not found.`);
-      }
-    };
-
-    const productName = computed(
-      () =>
-        product.value?.name?.en ||
-        product.value?.name?.dk ||
-        'Product Not Found'
-    );
 
     onMounted(() => {
       const productId = route.params.id;
       if (productId) {
-        fetchProductById(productId);
-      } else {
-        console.error('No product ID provided in route params.');
+        productStore.fetchProductById(productId); // Fetch product from store
       }
     });
 
-    return { product, productName };
+    const productName = computed(
+      () => productStore.selectedProduct?.name?.en || 'Product Not Found'
+    );
+    const productImage = computed(
+      () =>
+        productStore.selectedProduct?.images?.[0] ||
+        'https://via.placeholder.com/150'
+    );
+    const productPrice = computed(() =>
+      productStore.selectedProduct?.price
+        ? `${productStore.selectedProduct.price} DKK`
+        : 'Price not available'
+    );
+    const productInStock = computed(
+      () => productStore.selectedProduct?.stock || 0
+    );
+
+    return {
+      productName,
+      productImage,
+      productPrice,
+      productInStock,
+    };
   },
 };
 </script>
@@ -60,79 +58,18 @@ export default {
 .pdp {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 800px;
-  margin: 0 auto;
+  align-items: center;
+  text-align: center;
 }
 
-.pdp-image {
-  flex: 1;
-}
-
-.pdp-image img {
-  width: 100%;
+img {
+  max-width: 100%;
   height: auto;
-  border-radius: 8px;
+  margin-bottom: 20px;
 }
 
-.pdp-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-}
-
-.product-name {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.product-price {
-  font-size: 1.5rem;
-  color: #444;
-  margin-bottom: 5px;
-}
-
-.product-in-stock {
-  font-size: 1rem;
-  color: #666;
-}
-
-/* Responsive Design */
-@media (min-width: 768px) {
-  .pdp {
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .pdp-image {
-    max-width: 40%;
-  }
-
-  .pdp-info {
-    max-width: 60%;
-    padding-left: 20px;
-  }
-}
-
-@media (max-width: 767px) {
-  .pdp {
-    flex-direction: column;
-  }
-
-  .pdp-image {
-    max-width: 100%;
-  }
-
-  .pdp-info {
-    width: 100%;
-    text-align: center;
-  }
-
-  .product-name {
-    font-size: 1.8rem;
-  }
+p {
+  font-size: 18px;
+  color: #333;
 }
 </style>
